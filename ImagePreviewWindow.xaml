@@ -1,0 +1,347 @@
+<Window x:Class="WordPictureAddIn.ImagePreviewWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="图片预览"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        WindowState="Maximized"
+        Background="#D1000000"
+        AllowsTransparency="True"
+        WindowStartupLocation="Manual"
+        KeyDown="Window_KeyDown"
+        MouseDown="Window_MouseDown"
+        MouseWheel="Window_MouseWheel"
+        MouseMove="Window_MouseMove">
+    <Window.Resources>
+        <Style x:Key="ToolToggleStyle" TargetType="ToggleButton">
+            <Setter Property="Width" Value="46"/>
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Margin" Value="2,0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="ButtonBorder"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="10">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="#EEF1F4"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="#E7EEF9"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </Window.Resources>
+
+    <Grid x:Name="RootGrid" Background="Transparent">
+        <Button x:Name="CloseButton"
+                Panel.ZIndex="10"
+                Width="42"
+                Height="34"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="0,20,20,0"
+                Click="CloseButton_Click"
+                BorderThickness="0"
+                FontFamily="Microsoft YaHei UI"
+                FontSize="18"
+                FontWeight="Bold"
+                Foreground="White"
+                Cursor="Hand"
+                Content="×">
+            <Button.Template>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="ButtonBorder" Background="#303030" CornerRadius="10">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="#C44646"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="#9F3030"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Button.Template>
+        </Button>
+
+        <Canvas x:Name="ImageCanvas"
+                Panel.ZIndex="0"
+                ClipToBounds="True"
+                Background="Transparent"
+                Cursor="None">
+            <Canvas x:Name="ContentCanvas"
+                    RenderTransformOrigin="0,0"
+                    MouseLeftButtonDown="PreviewImage_MouseLeftButtonDown"
+                    MouseLeftButtonUp="PreviewImage_MouseLeftButtonUp"
+                    MouseMove="PreviewImage_MouseMove"
+                    MouseWheel="PreviewImage_MouseWheel">
+                <Canvas.RenderTransform>
+                    <TransformGroup>
+                        <ScaleTransform x:Name="ContentScaleTransform" ScaleX="1" ScaleY="1"/>
+                        <TranslateTransform x:Name="ContentTranslateTransform" X="0" Y="0"/>
+                    </TransformGroup>
+                </Canvas.RenderTransform>
+                <Image x:Name="PreviewImage"
+                       Stretch="Fill"/>
+                <Canvas x:Name="AnnotationCanvas"
+                        Panel.ZIndex="5"
+                        Background="Transparent"
+                        IsHitTestVisible="False"
+                        MouseLeftButtonDown="AnnotationCanvas_MouseLeftButtonDown"
+                        MouseLeftButtonUp="AnnotationCanvas_MouseLeftButtonUp"
+                        MouseMove="AnnotationCanvas_MouseMove"/>
+            </Canvas>
+        </Canvas>
+
+        <Border x:Name="ToolbarPanel"
+                Panel.ZIndex="20"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+                Margin="0,0,0,0"
+                Padding="14,10"
+                CornerRadius="18"
+                Background="#FAFFFFFF"
+                BorderBrush="#E7EAF0"
+                BorderThickness="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="24"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <ToggleButton x:Name="LineToolButton"
+                                  Style="{StaticResource ToolToggleStyle}"
+                                  Click="ToolButton_Click"
+                                  Tag="Line"
+                                  ToolTip="直线">
+                        <Grid Width="22" Height="18">
+                            <Path Stroke="#4B5563" StrokeThickness="2.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M1,9 L21,9"/>
+                        </Grid>
+                    </ToggleButton>
+                    <ToggleButton x:Name="RectangleToolButton"
+                                  Style="{StaticResource ToolToggleStyle}"
+                                  Click="ToolButton_Click"
+                                  Tag="Rectangle"
+                                  ToolTip="矩形">
+                        <Rectangle Width="22" Height="15" Stroke="#4B5563" StrokeThickness="2.5" RadiusX="2" RadiusY="2"/>
+                    </ToggleButton>
+                    <ToggleButton x:Name="EllipseToolButton"
+                                  Style="{StaticResource ToolToggleStyle}"
+                                  Click="ToolButton_Click"
+                                  Tag="Ellipse"
+                                  ToolTip="圆形">
+                        <Ellipse Width="22" Height="22" Stroke="#4B5563" StrokeThickness="2.5"/>
+                    </ToggleButton>
+                    <ToggleButton x:Name="ArrowToolButton"
+                                  Style="{StaticResource ToolToggleStyle}"
+                                  Click="ToolButton_Click"
+                                  Tag="Arrow"
+                                  ToolTip="箭头">
+                        <Grid Width="22" Height="26">
+                            <Path Stroke="#4B5563" StrokeThickness="2.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M11,22 L11,6"/>
+                            <Path Stroke="#4B5563" StrokeThickness="2.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M5,12 L11,6 L17,12"/>
+                        </Grid>
+                    </ToggleButton>
+                    <ToggleButton x:Name="TextToolButton"
+                                  Style="{StaticResource ToolToggleStyle}"
+                                  Click="ToolButton_Click"
+                                  Tag="Text"
+                                  ToolTip="文字">
+                        <TextBlock Text="T"
+                                   FontFamily="Microsoft YaHei UI"
+                                   FontSize="20"
+                                   FontWeight="Bold"
+                                   Foreground="#4B5563"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </ToggleButton>
+                </StackPanel>
+
+                <Border Grid.Column="1"
+                        Width="1"
+                        Height="24"
+                        Margin="11,0,11,0"
+                        VerticalAlignment="Center"
+                        Background="#E1E4E8"/>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button x:Name="UndoButton"
+                            Width="46"
+                            Height="38"
+                            Margin="2,0"
+                            Click="UndoButton_Click"
+                            ToolTip="撤销"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            BorderThickness="0"
+                            Cursor="Hand">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="ButtonBorder" Background="Transparent" CornerRadius="10">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="ButtonBorder" Property="Background" Value="#EEF1F4"/>
+                                    </Trigger>
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter TargetName="ButtonBorder" Property="Background" Value="#E7EEF9"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <Grid Width="24" Height="22">
+                            <Path Stroke="#4B5563"
+                                  StrokeThickness="2.8"
+                                  StrokeStartLineCap="Round"
+                                  StrokeEndLineCap="Round"
+                                  Data="M19,7 C16,4 11,4 8,7 C5,10 5,14 8,17 C10,19 14,19 17,17"
+                                  RenderTransformOrigin="0.5,0.5"
+                                  Margin="4,6,6,1"
+                                  Stretch="Fill">
+                                <Path.RenderTransform>
+                                    <TransformGroup>
+                                        <ScaleTransform/>
+                                        <SkewTransform/>
+                                        <RotateTransform Angle="210.09"/>
+                                        <TranslateTransform/>
+                                    </TransformGroup>
+                                </Path.RenderTransform>
+                            </Path>
+                            <Path Stroke="#4B5563"
+                                  StrokeThickness="2.8"
+                                  StrokeStartLineCap="Round"
+                                  StrokeEndLineCap="Round"
+                                  Data="M10,5 L6,7 L10,10"
+                                  RenderTransformOrigin="0.5,0.5">
+                                <Path.RenderTransform>
+                                    <TransformGroup>
+                                        <ScaleTransform/>
+                                        <SkewTransform/>
+                                        <RotateTransform Angle="12.609"/>
+                                        <TranslateTransform/>
+                                    </TransformGroup>
+                                </Path.RenderTransform>
+                            </Path>
+                        </Grid>
+                    </Button>
+
+                    <Button x:Name="ResetZoomButton"
+                            Width="46"
+                            Height="38"
+                            Margin="2,0"
+                            Click="ResetZoomButton_Click"
+                            ToolTip="恢复原比例"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            BorderThickness="0"
+                            Cursor="Hand">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="ButtonBorder" Background="Transparent" CornerRadius="10">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="ButtonBorder" Property="Background" Value="#EEF1F4"/>
+                                    </Trigger>
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter TargetName="ButtonBorder" Property="Background" Value="#E7EEF9"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <Grid Width="22" Height="22">
+                            <Rectangle Width="18" Height="14" Stroke="#4B5563" StrokeThickness="2" RadiusX="2" RadiusY="2"/>
+                            <Path Stroke="#4B5563" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M16,4 L20,4 L20,8"/>
+                            <Path Stroke="#4B5563" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M6,18 L2,18 L2,14"/>
+                        </Grid>
+                    </Button>
+
+                    <Button x:Name="SaveButton"
+                            Width="46"
+                            Height="38"
+                            Margin="2,0"
+                            Click="SaveButton_Click"
+                            ToolTip="保存"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            BorderThickness="0"
+                            Cursor="Hand">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="ButtonBorder" Background="Transparent" CornerRadius="10">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="ButtonBorder" Property="Background" Value="#EEF1F4"/>
+                                    </Trigger>
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter TargetName="ButtonBorder" Property="Background" Value="#E7EEF9"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <Grid Width="22" Height="22">
+                            <Rectangle Width="18" Height="18" Stroke="#4B5563" StrokeThickness="2" RadiusX="2" RadiusY="2"/>
+                            <Rectangle Width="10" Height="5" Fill="#4B5563" VerticalAlignment="Top" Margin="0,2,0,0"/>
+                            <Rectangle Width="8" Height="5" Stroke="#4B5563" StrokeThickness="1.6" VerticalAlignment="Bottom" Margin="0,0,0,2"/>
+                        </Grid>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Canvas x:Name="CursorOverlay"
+                Panel.ZIndex="30"
+                IsHitTestVisible="False">
+            <Grid x:Name="HandCursorVisual" Width="20" Height="20" Visibility="Collapsed">
+                <Viewbox Stretch="Uniform">
+                    <Path Fill="#333333"
+                          Stroke="#333333"
+                          StrokeThickness="42"
+                          StrokeLineJoin="Round"
+                          StrokeStartLineCap="Round"
+                          StrokeEndLineCap="Round"
+                          Data="M556.297 172.715a42.407 42.407 0 0 1 42.426 42.398l0.837 267.69c-0.118 1.703 0.63 2.737 1.408 2.737 0.63 0 1.29-0.699 1.506-2.284l37.74-208.953c3.732-20.672 21.844-36.166 42.162-36.166a40.074 40.074 0 0 1 7.136 0.64c23.064 4.164 38.391 27.562 34.217 50.587l-33.656 244.529c0 2.559 0.483 4.478 1.32 4.478 0.58 0 1.328-0.935 2.175-3.218l50.144-134.063c6.27-17.65 23.034-29.403 40.793-29.403A39.798 39.798 0 0 1 797.892 374c22.08 7.875 33.626 33.41 25.78 55.47l-87.904 287.191c-0.453 1.585-0.984 3.16-1.437 4.725l-0.187 0.591v0.128a187.031 187.031 0 0 1-177.847 129.1c-53.156 0-108.42-18.752-150.472-51-45.419-27.336-190.968-183.783-190.968-183.783-22.09-22.07-18.792-55.882 3.297-77.962 11.537-11.537 25.919-17.6 40.173-17.6 13.033 0 25.967 5.05 36.51 15.592l63.138 63.157c8.603 8.594 18.132 12.699 26.922 12.699a26.952 26.952 0 0 0 20.88-9.893c7.658-9.037 4.635-36.914 2.49-54.594l-31.668-260.259c-2.825-23.26 13.781-45.724 37.003-48.549a40.497 40.497 0 0 1 4.853-0.295c21.282 0 39.749 16.98 42.387 38.597l34.926 204.425c0.905 2.54 2.342 4.036 3.602 4.036s2.353-1.496 2.58-4.922l11.88-265.741a42.417 42.417 0 0 1 42.467-42.398m0-70.875a113.36 113.36 0 0 0-104.344 69.153c-0.246 0.57-0.482 1.152-0.718 1.732a111.234 111.234 0 0 0-90.022 10.976 113.597 113.597 0 0 0-32.415 29.207 115.23 115.23 0 0 0-19.067 38.489 113.843 113.843 0 0 0-3.465 44.68l21.36 175.77a120.842 120.842 0 0 0-69.3-21.863c-33.468 0-65.549 13.614-90.286 38.332-23.212 23.202-36.993 53.363-38.863 84.952a120.92 120.92 0 0 0 34.502 92.216c5.532 5.906 39.64 42.407 79.203 82.412 74.586 75.422 105.328 99.648 122.702 110.771 53.973 40.36 123.254 63.414 190.674 63.414A257.906 257.906 0 0 0 801.14 745.1c0.247-0.709 0.483-1.417 0.7-2.136l0.117-0.374a178.56 178.56 0 0 0 1.723-5.64l87.413-285.578a113.203 113.203 0 0 0 5.729-42.86 115.585 115.585 0 0 0-35.772-77.135 111.431 111.431 0 0 0-67.45-30.19l0.148-0.985a113.676 113.676 0 0 0-1.201-43.155 115.408 115.408 0 0 0-16.872-39.523 113.774 113.774 0 0 0-30.703-30.968 111.077 111.077 0 0 0-84.981-17.06 113.203 113.203 0 0 0-103.694-67.656z"/>
+                </Viewbox>
+            </Grid>
+            <Grid x:Name="PenCursorVisual" Width="20" Height="20" Visibility="Collapsed">
+                <Viewbox Stretch="Uniform">
+                    <Canvas Width="1024" Height="1024" RenderTransformOrigin="0.5,0.5">
+                        <Canvas.RenderTransform>
+                            <RotateTransform Angle="90"/>
+                        </Canvas.RenderTransform>
+                        <Path Fill="#FFFFFF" Data="M597.333333 273.664L657.664 213.333333l195.84 195.669334L793.258667 469.333333z"/>
+                        <Path Fill="#FFFFFF" Data="M745.472 203.264L281.898667 666.837333l-39.253334 157.226667 157.184-39.296L863.402667 321.194667l-117.930667-117.930667zM981.333333 321.194667l-538.88 538.88L128 938.666667l78.634667-314.453334L745.472 85.333333 981.333333 321.194667z"/>
+                        <Path Stroke="#2E2F30" StrokeThickness="42" Fill="Transparent" Data="M597.333333 273.664L657.664 213.333333l195.84 195.669334L793.258667 469.333333z"/>
+                        <Path Stroke="#2E2F30" StrokeThickness="42" Fill="Transparent" Data="M745.472 203.264L281.898667 666.837333l-39.253334 157.226667 157.184-39.296L863.402667 321.194667l-117.930667-117.930667zM981.333333 321.194667l-538.88 538.88L128 938.666667l78.634667-314.453334L745.472 85.333333 981.333333 321.194667z"/>
+                    </Canvas>
+                </Viewbox>
+            </Grid>
+        </Canvas>
+
+    </Grid>
+</Window>
